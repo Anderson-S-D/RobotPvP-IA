@@ -33,7 +33,7 @@ class MatchRepository {
 
     suspend fun createMatch(difficulty: GameDifficulty = GameDifficulty.EASY): Result<MatchModel> {
         return try {
-            val uid = auth.currentUser?.uid ?: ""
+            val uid = auth.currentUser?.uid?.takeIf { it.isNotBlank() } ?: "user1"
             var code = generateGameCode()
             // Ensure unique code
             while (matchesRef.child(code).get().await().exists()) {
@@ -69,7 +69,7 @@ class MatchRepository {
 
     suspend fun joinMatch(code: String): Result<MatchModel> {
         return try {
-            val uid = auth.currentUser?.uid ?: ""
+            val uid = auth.currentUser?.uid?.takeIf { it.isNotBlank() } ?: "user1"
             val snapshot = matchesRef.child(code.uppercase()).get().await()
             if (!snapshot.exists()) {
                 return Result.failure(Exception("Partida no encontrada"))

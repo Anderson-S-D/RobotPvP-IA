@@ -4,6 +4,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -35,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.udistrital.robotpvp.ai.RobotBrain
 import com.udistrital.robotpvp.data.enums.GameWinner
 import java.util.Locale
 import kotlin.math.ceil
@@ -47,6 +49,24 @@ fun GameScreen(
     onBackToMenu: () -> Unit = {}
 ) {
     val context = LocalContext.current
+
+    // IA: si el modelo no carga, brain queda null y se usa el movimiento aleatorio de respaldo.
+    val brain = remember {
+        runCatching { RobotBrain(context) }
+            .onFailure { Log.e("RobotAI", "No se pudo cargar el modelo; se usa movimiento aleatorio", it) }
+            .getOrNull()
+    }
+    // Es la misma memoria que lee brain.observar() (entradas 6 y 7).
+    val memoria = remember { brain?.memoria }
+
+    var accionActual by remember { mutableIntStateOf(-1) }  // -1 = ninguna
+    var contadorFrames by remember { mutableIntStateOf(0) }
+    var robot2VelX by remember { mutableFloatStateOf(0f) }  // último movimiento del robot rojo
+    var robot2VelY by remember { mutableFloatStateOf(0f) }
+    var valorAnterior by remember { mutableFloatStateOf(0f) }  // V(s_t) del paso anterior
+    var distanciaAnterior by remember { mutableFloatStateOf(0f) }
+    var probabilidadesActuales by remember { mutableStateOf(FloatArray(4)) }  // para el panel
+    var valorActual by remember { mutableFloatStateOf(0f) }  // para el panel
 
     // Estado del juego
     var isGameOver by remember { mutableStateOf(false) }
@@ -84,6 +104,54 @@ fun GameScreen(
         val x = Random.nextFloat() * (maxX - minX) + minX
         val y = Random.nextFloat() * (maxY - minY) + minY
         return Offset(x, y)
+    }
+
+    // Deja la IA como al empezar un episodio.
+    fun reiniciarIA() {
+        memoria?.reiniciar()
+        contadorFrames = 0
+        accionActual = -1
+        robot2VelX = 0f
+        robot2VelY = 0f
+    }
+
+    // Figura 1 del informe: una decisión cada accionesCadaNFrames, en el mismo orden que agent.py.
+    fun pasoDeDecision(cerebro: RobotBrain) {
+        val ancho = canvasSize.width
+        val alto = canvasSize.height
+        val memoriaIA = cerebro.memoria
+        fun observarAhora() = cerebro.observar(
+            robot2Pos.x, robot2Pos.y, robot2VelX, robot2VelY,
+            robot1Pos.x, robot1Pos.y, robot1VelX, robot1VelY,
+            ancho, alto,
+        )
+        val distanciaActual = hypot(robot1Pos.x - robot2Pos.x, robot1Pos.y - robot2Pos.y)
+
+        if (accionActual != -1) {
+            // 1) Copiloto: V del nuevo estado con (a_t, δ_{t-1}), como s' en agent.py (evita la circularidad).
+            memoriaIA.anotar(accionActual, memoriaIA.ultimoDelta)
+            val valorNuevo = cerebro.pensar(observarAhora()).second
+
+            // 2) r = coefAcercamiento·(dAnterior − dActual)/diagonal + penalizacionPaso
+            //    δ = r + gamma·V_nuevo − V_anterior  (la "Ventaja" del informe: 9 − 4 = +5).
+            val diagonal = hypot(ancho, alto)
+            val recompensa = cerebro.coefAcercamiento * (distanciaAnterior - distanciaActual) / diagonal +
+                cerebro.penalizacionPaso
+            val delta = recompensa + cerebro.gamma * valorNuevo - valorAnterior
+
+            // 3) Anotar (acción, δ) en la memoria de descubrimiento.
+            memoriaIA.anotar(accionActual, delta)
+        }
+
+        // 4) Observar otra vez con la memoria actualizada y pensar: probabilidades (Piloto) y V.
+        val (probabilidades, valor) = cerebro.pensar(observarAhora())
+        probabilidadesActuales = probabilidades
+        valorActual = valor
+
+        // 5) Elegir la acción y guardar V y la distancia para el próximo paso.
+        accionActual = cerebro.elegirAccion(probabilidades)
+        valorAnterior = valor
+        distanciaAnterior = distanciaActual
     }
 
     val sensorManager = remember { context.getSystemService(SensorManager::class.java) }
@@ -132,6 +200,7 @@ fun GameScreen(
         if (robot2Pos == Offset.Zero) {
             robot2Pos = getRandomScreenPosition(minX, maxX, minY, maxY)
             targetBorderPos = getRandomScreenPosition(minX, maxX, minY, maxY)
+            reiniciarIA()
         }
 
         var lastFrameTime = 0L
@@ -148,6 +217,11 @@ fun GameScreen(
                     winner = GameWinner.PLAYER
                     isGameOver = true
                     return@withFrameNanos
+                }
+
+                // Como en env.py: se decide antes de que el jugador y el robot se muevan.
+                if (brain != null && contadorFrames % brain.accionesCadaNFrames == 0) {
+                    pasoDeDecision(brain)
                 }
 
                 // 1. Sensibilidad para la Bola Roja
@@ -170,18 +244,43 @@ fun GameScreen(
 
                 robot1Pos = Offset(nextX, nextY)
 
-                // 2. Movimiento de la Bola Azul a cualquier punto al azar
-                val dx = targetBorderPos.x - robot2Pos.x
-                val dy = targetBorderPos.y - robot2Pos.y
-                val distanceToTarget = hypot(dx, dy)
+                // 2. Movimiento del robot rojo
+                if (brain != null) {
+                    // La acción se mantiene: velocidad constante en [UP, DOWN, LEFT, RIGHT], limitada a la arena.
+                    var nuevoX = robot2Pos.x
+                    var nuevoY = robot2Pos.y
+                    when (accionActual) {
+                        0 -> nuevoY -= brain.velocidad
+                        1 -> nuevoY += brain.velocidad
+                        2 -> nuevoX -= brain.velocidad
+                        3 -> nuevoX += brain.velocidad
+                    }
+                    nuevoX = nuevoX.coerceIn(minX, maxX)
+                    nuevoY = nuevoY.coerceIn(minY, maxY)
 
-                if (distanceToTarget < blueSpeed) {
-                    robot2Pos = targetBorderPos
-                    targetBorderPos = getRandomScreenPosition(minX, maxX, minY, maxY)
+                    // θ_agente usa el último movimiento real: contra una pared se conserva el anterior.
+                    val movidoX = nuevoX - robot2Pos.x
+                    val movidoY = nuevoY - robot2Pos.y
+                    if (hypot(movidoX, movidoY) > 1e-9f) {
+                        robot2VelX = movidoX
+                        robot2VelY = movidoY
+                    }
+                    robot2Pos = Offset(nuevoX, nuevoY)
+                    contadorFrames++
                 } else {
-                    val vx = (dx / distanceToTarget) * blueSpeed
-                    val vy = (dy / distanceToTarget) * blueSpeed
-                    robot2Pos = Offset(robot2Pos.x + vx, robot2Pos.y + vy)
+                    // Respaldo: movimiento original hacia puntos al azar
+                    val dx = targetBorderPos.x - robot2Pos.x
+                    val dy = targetBorderPos.y - robot2Pos.y
+                    val distanceToTarget = hypot(dx, dy)
+
+                    if (distanceToTarget < blueSpeed) {
+                        robot2Pos = targetBorderPos
+                        targetBorderPos = getRandomScreenPosition(minX, maxX, minY, maxY)
+                    } else {
+                        val vx = (dx / distanceToTarget) * blueSpeed
+                        val vy = (dy / distanceToTarget) * blueSpeed
+                        robot2Pos = Offset(robot2Pos.x + vx, robot2Pos.y + vy)
+                    }
                 }
 
                 // DETECCIÓN DE COLISIÓN ENTRE BOLAS
@@ -270,6 +369,36 @@ fun GameScreen(
             color = Color(0xFF38BDF8), // Texto azul cibernético
             fontSize = 13.sp
         )
+
+        // HUD - Panel de la IA: estos valores solo cambian en cada paso de decisión.
+        if (brain != null && memoria != null) {
+            val p = probabilidadesActuales
+            fun marca(accion: Int) = if (accion == accionActual) "►" else ""
+            val nombreAccion = listOf("UP", "DOWN", "LEFT", "RIGHT").getOrElse(memoria.ultimaAccion) { "—" }
+            Text(
+                text = String.format(
+                    Locale.US,
+                    """
+                    PILOTO (Actor)
+                    %s↑ %.0f%%  %s↓ %.0f%%  %s← %.0f%%  %s→ %.0f%%
+
+                    COPILOTO (Crítico)
+                    V = %.2f
+
+                    BITÁCORA (t−1)
+                    a = %s   δ = %+.2f
+                    """.trimIndent(),
+                    marca(0), p[0] * 100, marca(1), p[1] * 100, marca(2), p[2] * 100, marca(3), p[3] * 100,
+                    valorActual,
+                    nombreAccion, memoria.ultimoDelta,
+                ),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(28.dp),
+                color = Color(0xFF38BDF8),
+                fontSize = 13.sp
+            )
+        }
 
         // Temporizador en la parte inferior de la pantalla
         Box(
@@ -384,6 +513,7 @@ fun GameScreen(
                             robot1VelY = 0f
                             robot2Pos = Offset.Zero
                             targetBorderPos = Offset.Zero
+                            reiniciarIA()
                             timeRemaining = gameDurationSeconds
                             winner = null
                             isGameOver = false
