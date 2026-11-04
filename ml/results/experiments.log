@@ -1,0 +1,79 @@
+[train] reutilizando ac_disc_s1
+[train] reutilizando ac_base_s2
+[train] completado ac_disc_s1
+[train] reutilizando ac_base_s1
+[train] completado ac_base_s2
+[train] reutilizando ac_base_s3
+[train] completado ac_base_s1
+[train] reutilizando ac_disc_s3
+[train] reutilizando ac_disc_s2
+[train] completado ac_base_s3
+[train] completado ac_disc_s3
+[train] completado ac_disc_s2
+[eval] 300 episodios por duración/política; semillas de episodio 12345..12644
+[eval] random_target  dur=30s pol=flee        eps= 300 cap=0.697 t_cap=11.12s
+[eval] random_action  dur=30s pol=flee        eps= 300 cap=0.233 t_cap=12.10s
+[eval] greedy_chase   dur=30s pol=flee        eps= 300 cap=1.000 t_cap= 1.32s
+[eval] random_target  dur=30s pol=tilt_random eps= 300 cap=0.920 t_cap= 9.75s
+[eval] random_action  dur=30s pol=tilt_random eps= 300 cap=0.527 t_cap=11.55s
+[eval] greedy_chase   dur=30s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.13s
+[eval] random_target  dur=45s pol=flee        eps= 300 cap=0.780 t_cap=13.71s
+[eval] random_action  dur=45s pol=flee        eps= 300 cap=0.293 t_cap=17.32s
+[eval] greedy_chase   dur=45s pol=flee        eps= 300 cap=1.000 t_cap= 1.32s
+[eval] random_target  dur=45s pol=tilt_random eps= 300 cap=0.970 t_cap=11.17s
+[eval] random_action  dur=45s pol=tilt_random eps= 300 cap=0.660 t_cap=16.64s
+[eval] greedy_chase   dur=45s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.13s
+[eval] random_target  dur=60s pol=flee        eps= 300 cap=0.853 t_cap=16.94s
+[eval] random_action  dur=60s pol=flee        eps= 300 cap=0.357 t_cap=23.53s
+[eval] greedy_chase   dur=60s pol=flee        eps= 300 cap=1.000 t_cap= 1.32s
+[eval] random_target  dur=60s pol=tilt_random eps= 300 cap=0.997 t_cap=12.24s
+[eval] random_action  dur=60s pol=tilt_random eps= 300 cap=0.750 t_cap=21.00s
+[eval] greedy_chase   dur=60s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.13s
+[eval] ac_base        dur=30s pol=flee        eps= 300 cap=1.000 t_cap= 1.87s
+[eval] ac_base        dur=30s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.57s
+[eval] ac_base        dur=45s pol=flee        eps= 300 cap=1.000 t_cap= 1.87s
+[eval] ac_base        dur=45s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.57s
+[eval] ac_base        dur=60s pol=flee        eps= 300 cap=1.000 t_cap= 1.87s
+[eval] ac_base        dur=60s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.57s
+[eval] ac_base        dur=30s pol=flee        eps= 300 cap=1.000 t_cap= 1.96s
+[eval] ac_base        dur=30s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.66s
+[eval] ac_base        dur=45s pol=flee        eps= 300 cap=1.000 t_cap= 1.96s
+[eval] ac_base        dur=45s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.66s
+[eval] ac_base        dur=60s pol=flee        eps= 300 cap=1.000 t_cap= 1.96s
+[eval] ac_base        dur=60s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.66s
+[eval] ac_base        dur=30s pol=flee        eps= 300 cap=1.000 t_cap= 1.97s
+[eval] ac_base        dur=30s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.64s
+[eval] ac_base        dur=45s pol=flee        eps= 300 cap=1.000 t_cap= 1.97s
+[eval] ac_base        dur=45s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.64s
+[eval] ac_base        dur=60s pol=flee        eps= 300 cap=1.000 t_cap= 1.97s
+[eval] ac_base        dur=60s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.64s
+[eval] ac_disc        dur=30s pol=flee        eps= 300 cap=1.000 t_cap= 1.85s
+[eval] ac_disc        dur=30s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.56s
+[eval] ac_disc        dur=45s pol=flee        eps= 300 cap=1.000 t_cap= 1.85s
+[eval] ac_disc        dur=45s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.56s
+[eval] ac_disc        dur=60s pol=flee        eps= 300 cap=1.000 t_cap= 1.85s
+[eval] ac_disc        dur=60s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.56s
+[eval] ac_disc        dur=30s pol=flee        eps= 300 cap=1.000 t_cap= 1.92s
+[eval] ac_disc        dur=30s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.61s
+[eval] ac_disc        dur=45s pol=flee        eps= 300 cap=1.000 t_cap= 1.92s
+[eval] ac_disc        dur=45s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.61s
+[eval] ac_disc        dur=60s pol=flee        eps= 300 cap=1.000 t_cap= 1.92s
+[eval] ac_disc        dur=60s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.61s
+[eval] ac_disc        dur=30s pol=flee        eps= 300 cap=1.000 t_cap= 1.90s
+[eval] ac_disc        dur=30s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.56s
+[eval] ac_disc        dur=45s pol=flee        eps= 300 cap=1.000 t_cap= 1.90s
+[eval] ac_disc        dur=45s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.56s
+[eval] ac_disc        dur=60s pol=flee        eps= 300 cap=1.000 t_cap= 1.90s
+[eval] ac_disc        dur=60s pol=tilt_random eps= 300 cap=1.000 t_cap= 1.56s
+
+Resumen general:
+       agente  episodios  capturas tasa_captura t_medio_s t_mediana_s t_desv_s dist_media_px dec/eps  checkpoints
+random_target       1800      1565       86.9 %    12.442       9.283   11.171       724.456 241.942            1
+random_action       1800       846       47.0 %    17.415      13.225   14.577       899.860 467.697            1
+      ac_base       5400      5400      100.0 %     1.779       1.650    1.007       417.849  27.042            3
+      ac_disc       5400      5400      100.0 %     1.735       1.608    0.985       419.740  26.378            3
+ greedy_chase       1800      1800      100.0 %     1.226       1.158    0.665       438.757  18.785            1
+
+Descubrimiento: P(repetir | δ<0)=55.65 %, P(repetir | δ>0)=72.86 % (N=137,040)
+
+[ok] resultados -> /Users/ander/StudioProjects/robotpvp/ml/results
